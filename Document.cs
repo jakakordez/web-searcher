@@ -7,7 +7,9 @@ namespace WebSearcher
 {
     class Document
     {
-        public Document(string path, sqliteContext dbContext)
+        public string Text;
+        string name;
+        public Document(string path, string name)
         {
             var doc = new HtmlDocument();
             doc.Load(path);
@@ -16,36 +18,40 @@ namespace WebSearcher
             var nodes = doc.DocumentNode.SelectNodes(query);
             if(nodes != null) foreach (var node in nodes) node.Remove();
             // Text from document, lowercase
-            var text = doc.DocumentNode.InnerText.ToLower();
+            Text = doc.DocumentNode.InnerText.ToLower();
             // Remove numbers
-            text = Regex.Replace(text, @"[\d-]", string.Empty);
-            //Tokenize
-            var tokens = new Regex("\\w{2,}").Matches(text);
+            Text = Regex.Replace(Text, @"[\d-]", string.Empty);
+            this.name = name;
+        }
 
+        public void Index(sqliteContext dbContext)
+        {
+            var tokens = new Regex("\\w{2,}").Matches(Text);
             Dictionary<string, Posting> postings = new Dictionary<string, Posting>();
-            int index = 1;
+            int index = 0;
             foreach (var token in tokens)
             {
                 var word = token.ToString();
-
+                index++;
                 if (StopWords.Contains(word)) continue;
 
-                if(dbContext.IndexWord.Find(word) == null)
+                if (dbContext.IndexWord.Find(word) == null)
                     dbContext.IndexWord.Add(new IndexWord() { Word = word });
 
                 if (!postings.ContainsKey(word))
                 {
                     postings.Add(word, new Posting()
                     {
-                        Word = word, DocumentName = path, Indexes = ""
+                        Word = word,
+                        DocumentName = name,
+                        Indexes = ""
                     });
                 }
 
                 var p = postings[word];
                 p.Frequency++;
-                if(p.Indexes != "") p.Indexes += ",";
+                if (p.Indexes != "") p.Indexes += ",";
                 p.Indexes += index;
-                index++;
             }
 
             foreach (var posting in postings)

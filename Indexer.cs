@@ -27,7 +27,8 @@ namespace WebSearcher
             Console.WriteLine("Indexing {0} files from {1}", files.Length, path);
             foreach (var file in files)
             {
-                new Document(file, db);
+                var doc = new Document(file, file.Replace(basePath, ""));
+                doc.Index(db);
             }
         }
     }

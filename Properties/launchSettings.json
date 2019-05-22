@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WebSearcher": {
+      "commandName": "Project",
+      "commandLineArgs": "q Sistem SPOT"
+    }
+  }
+}
