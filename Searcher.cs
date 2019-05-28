@@ -58,29 +58,33 @@ namespace WebSearcher
         {
             var doc = new Document(basePath+document, document);
             var tokens = new Regex("\\w{2,}").Matches(doc.Text);
+            var ind = indices
+                .SelectMany(i => new int[] { i-3, i-2, i-1, i, i+1 })
+                .Distinct()
+                .OrderBy(i => i)
+                .ToList();
             int idx = indices[0]-1;
             StringBuilder sb = new StringBuilder();
             
             bool dots = false;
+            int? start = null;
             for (int i = 0; i < tokens.Count; i++)
             {
-                var token = tokens[i].ToString();
-                int distance = Math.Abs(i-idx);
-                if(distance == 3 && i < idx && !dots)
-                {
-                    sb.Append("... ");
-                    dots = true;
-                }
-                if (distance < 3) {
-                    sb.Append(token);
-                    sb.Append(" ");
+                if (ind.Contains(i)) {
+                    if (start == null) start = i;
                     dots = false;
                 }
-                else if(distance == 4 && idx < i)
+                else if (!dots)
                 {
-                    indices.RemoveAt(0);
-                    if (indices.Count > 0) idx = indices[0]-1;
-                    else idx = int.MaxValue;
+                    if (start != null) {
+                        var txt = doc.Text.Substring(
+                            tokens[start.Value].Index,
+                            tokens[i-1].Index + tokens[i - 1].Length - tokens[start.Value].Index);
+                        sb.Append(txt);
+                    }
+                    start = null;
+                    sb.Append(" ... ");
+                    dots = true;
                 }
                 
             }

@@ -2,7 +2,7 @@
   "profiles": {
     "WebSearcher": {
       "commandName": "Project",
-      "commandLineArgs": "q Sistem SPOT"
+      "commandLineArgs": "q social services"
     }
   }
 }

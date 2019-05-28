@@ -18,9 +18,10 @@ namespace WebSearcher
             var nodes = doc.DocumentNode.SelectNodes(query);
             if(nodes != null) foreach (var node in nodes) node.Remove();
             // Text from document, lowercase
-            Text = doc.DocumentNode.InnerText.ToLower();
+            Text = doc.DocumentNode.InnerText;
             // Remove numbers
             Text = Regex.Replace(Text, @"[\d-]", string.Empty);
+            Text = Regex.Replace(Text, @"\s+", " ");
             this.name = name;
         }
 
@@ -31,7 +32,7 @@ namespace WebSearcher
             int index = 0;
             foreach (var token in tokens)
             {
-                var word = token.ToString();
+                var word = token.ToString().ToLower();
                 index++;
                 if (StopWords.Contains(word)) continue;
 
