@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace WebSearcher
@@ -13,23 +14,24 @@ namespace WebSearcher
             this.basePath = basePath;
         }
 
-        public void Start(sqliteContext db)
+        public IEnumerable<Posting> Start(sqliteContext db, List<string> words)
         {
-            Index("e-prostor.gov.si", db);
-            Index("e-uprava.gov.si", db);
-            Index("evem.gov.si", db);
-            Index("podatki.gov.si", db);
+            return new List<string>(new string[] {
+                "e-prostor.gov.si",
+                "e-uprava.gov.si",
+                "evem.gov.si",
+                "podatki.gov.si" })
+                .SelectMany(p => Index(p, db, words))
+                .ToList();
         }
 
-        public void Index(string path, sqliteContext db)
+        public IEnumerable<Posting> Index(string path, sqliteContext db, List<string> words)
         {
             var files = Directory.GetFiles(basePath+path, "*.html");
-            Console.WriteLine("Indexing {0} files from {1}", files.Length, path);
-            foreach (var file in files)
-            {
-                var doc = new Document(file, file.Replace(basePath, ""));
-                doc.Index(db);
-            }
+            if(db != null) Console.WriteLine("Indexing {0} files from {1}", files.Length, path);
+
+            return new List<string>(files)
+                .SelectMany(f => new Document(f, f.Replace(basePath, "")).Index(db, words));
         }
     }
 }

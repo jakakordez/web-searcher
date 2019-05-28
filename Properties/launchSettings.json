@@ -2,7 +2,7 @@
   "profiles": {
     "WebSearcher": {
       "commandName": "Project",
-      "commandLineArgs": "q social services"
+      "commandLineArgs": "d univerza v ljubljani"
     }
   }
 }

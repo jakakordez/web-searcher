@@ -9,6 +9,16 @@ namespace WebSearcher
     {
         public string Text;
         string name;
+        MatchCollection tokens;
+        public MatchCollection Tokens
+        {
+            get
+            {
+                if (tokens == null) tokens = new Regex("\\w{2,}").Matches(Text);
+                return tokens;
+            }
+        }
+
         public Document(string path, string name)
         {
             var doc = new HtmlDocument();
@@ -25,19 +35,19 @@ namespace WebSearcher
             this.name = name;
         }
 
-        public void Index(sqliteContext dbContext)
+        public IEnumerable<Posting> Index(sqliteContext dbContext, List<string> words)
         {
-            var tokens = new Regex("\\w{2,}").Matches(Text);
             Dictionary<string, Posting> postings = new Dictionary<string, Posting>();
             int index = 0;
-            foreach (var token in tokens)
+            foreach (var token in Tokens)
             {
                 var word = token.ToString().ToLower();
                 index++;
                 if (StopWords.Contains(word)) continue;
+                if (words != null && !words.Contains(word)) continue;
 
-                if (dbContext.IndexWord.Find(word) == null)
-                    dbContext.IndexWord.Add(new IndexWord() { Word = word });
+                if (dbContext?.IndexWord.Find(word) == null)
+                    dbContext?.IndexWord.Add(new IndexWord() { Word = word });
 
                 if (!postings.ContainsKey(word))
                 {
@@ -57,8 +67,9 @@ namespace WebSearcher
 
             foreach (var posting in postings)
             {
-                dbContext.Posting.Add(posting.Value);
+                dbContext?.Posting.Add(posting.Value);
             }
+            return postings.Values;
         }
 
         static readonly List<string> StopWords = new List<string>(new string[]

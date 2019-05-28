@@ -7,23 +7,22 @@ using System.Text.RegularExpressions;
 
 namespace WebSearcher
 {
-    class Searcher
+    abstract class Searcher
     {
-        string basePath;
-        sqliteContext db;
-        public Searcher(string basePath, sqliteContext db)
+        public string BasePath;
+        public Searcher(string basePath)
         {
-            this.basePath = basePath;
-            this.db = db;
+            BasePath = basePath;
         }
+
+        public abstract IQueryable<Posting> Find(List<string> words);
 
         public void Query(List<string> words)
         {
             words = words.Select(w => w.ToLower()).ToList();
             var stw = new Stopwatch();
             stw.Start();
-            var postings = db.Posting
-                .Where(p => words.Contains(p.Word))
+            var postings = Find(words)
                 .GroupBy(p => p.DocumentName)
                 .Select(g => new {
                     Document = g.Key,
@@ -51,15 +50,13 @@ namespace WebSearcher
                     posting.Document, 
                     GetSnippet(posting.Document, posting.Indices));
             }
-           
         }
 
         private string GetSnippet(string document, List<int> indices)
         {
-            var doc = new Document(basePath+document, document);
-            var tokens = new Regex("\\w{2,}").Matches(doc.Text);
+            var doc = new Document(BasePath+document, document);
             var ind = indices
-                .SelectMany(i => new int[] { i-3, i-2, i-1, i, i+1 })
+                .SelectMany(i => new int[] { i-4, i-3, i-2, i-1, i, i+1, i+2 })
                 .Distinct()
                 .OrderBy(i => i)
                 .ToList();
@@ -68,7 +65,7 @@ namespace WebSearcher
             
             bool dots = false;
             int? start = null;
-            for (int i = 0; i < tokens.Count; i++)
+            for (int i = 0; i < doc.Tokens.Count; i++)
             {
                 if (ind.Contains(i)) {
                     if (start == null) start = i;
@@ -77,9 +74,11 @@ namespace WebSearcher
                 else if (!dots)
                 {
                     if (start != null) {
+                        var first = doc.Tokens[start.Value];
+                        var last = doc.Tokens[i - 1];
                         var txt = doc.Text.Substring(
-                            tokens[start.Value].Index,
-                            tokens[i-1].Index + tokens[i - 1].Length - tokens[start.Value].Index);
+                            first.Index,
+                            last.Index + last.Length - first.Index);
                         sb.Append(txt);
                     }
                     start = null;

@@ -9,21 +9,33 @@ namespace WebSearcher
         static void Main(string[] args)
         {
             var db = new sqliteContext();
-
-            if (args[0] == "i")
+            var words = new List<string>(args);
+            words.RemoveAt(0);
+            var basePath = "../../../sites/";
+            switch (args[0])
             {
-                Indexer indexer = new Indexer("../../../sites/");
-                indexer.Start(db);
-                db.SaveChanges();
+                case "i":
+                    Indexer indexer = new Indexer(basePath);
+                    indexer.Start(db, null);
+                    db.SaveChanges();
+                    break;
+                case "q":
+                    new IndexedSearcher(basePath, db)
+                        .Query(words);
+                    break;
+                case "d":
+                    new DirectSearcher(basePath)
+                        .Query(words);
+                    break;
+                default:
+                    Console.WriteLine("WebSearcher");
+                    Console.WriteLine("i - Indexing");
+                    Console.WriteLine("q - Query with provided index");
+                    Console.WriteLine("d - Query directly without index");
+                    break;
             }
-            if(args.Length > 1)
-            {
-                var searcher = new Searcher("../../../sites/", db);
-                var words = new List<string>(args);
-                words.RemoveAt(0);
-                searcher.Query(words);
-            }
-            Console.WriteLine("Indexer finished!");
+            Console.WriteLine("Program finished, press Enter to quit");
+            Console.Read();
         }
     }
 }
